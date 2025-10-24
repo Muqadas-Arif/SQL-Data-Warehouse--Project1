@@ -10,6 +10,19 @@
                  structure safely.
 ============================================================== */
 use datawarehouse
+if object_id('bronze.crm_cust_info','U') is not null
+drop table bronze.crm_cust,info;
+CREATE TABLE bronze.crm_cust_info(
+cst_id INT,
+cst_key NVARCHAR(50),
+cst_firstname NVARCHAR(50),
+cst_lastname NVARCHAR(50),
+cst_material_status NVARCHAR(60),
+cst_gndr NVARCHAR(50),
+cst_create_date DATE
+)	
+	
+	
 if object_id('bronze.crm_sales_details','U') is not null
 drop table bronze.crm_sales_details;
 create table bronze.crm_sales_details(
