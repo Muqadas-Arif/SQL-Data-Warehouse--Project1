@@ -138,6 +138,15 @@ case when trim(cntry)='DE' then 'Germany'
 	 end as cnrty
 from bronze.erp_loc_a101
 
+	>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>tabl6<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+use datawarehouse
+insert into silver.erp_px_cat_glv2(id,cat,subcat,maintenance)
+select
+id,cat,subcat,maintenance
+from bronze.erp_px_cat_glv2
+
 
 
 
