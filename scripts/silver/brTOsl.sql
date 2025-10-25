@@ -28,7 +28,7 @@
 -- RESULT:
 -- Cleaned, deduplicated, and standardized customer master data.
 
-
+truncate table silver.crm_cust_info
 insert into silver.crm_cust_info
 	(cst_id,
 	cst_key,
@@ -85,7 +85,7 @@ where cst_id is not null
 
 
 
-use datawarehouse
+truncate table silver.crm_prd_info 
 insert into silver.crm_prd_info (
 prd_id,
 prd_key, 
@@ -132,6 +132,9 @@ select*from bronze.crm_prd_info
 -- RESULT:
 -- Verified and corrected sales fact table for accurate reporting.
 
+
+	
+truncate table  silver.crm_sales_details	
 insert  into silver.crm_sales_details(
 sls_ord_num,
 sls_prd_key,
@@ -192,7 +195,7 @@ from bronze.crm_sales_details
 -- RESULT:
 -- Clean and reliable demographic data for integration.
 
-
+truncate table silver.erp_cust_az12
 insert into silver.erp_cust_az12(cid,bdate,gen)
 select
 case when cid like 'NAS%' then substring(cid,4,len(cid))
@@ -220,6 +223,8 @@ from bronze.erp_cust_az12
 --     NULL or empty → n/a
 -- • Ensures all country names follow consistent formatting.
 --
+
+truncate table	 silver.erp_loc_a101
 insert into silver.erp_loc_a101(cid,cntry)
 select 
 replace (cid,'-','') cid,
@@ -243,7 +248,7 @@ from bronze.erp_loc_a101
 -- Reliable category reference table for mapping and classification.
 
 
-use datawarehouse
+truncate table silver.erp_px_cat_glv2
 insert into silver.erp_px_cat_glv2(id,cat,subcat,maintenance)
 select
 id,cat,subcat,maintenance
