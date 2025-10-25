@@ -1,4 +1,34 @@
-table1
+/*═══════════════════════════════════════════════════════════════════════
+ 💎 DATA WAREHOUSE SILVER LAYER TRANSFORMATION  
+ 🧩 ETL Process: From Bronze → Silver
+ ------------------------------------------------------------------------
+ This section describes the data flow and transformations applied while
+ loading data from the Bronze Layer to the Silver Layer. Each table below
+ ensures data cleansing, standardization, and enrichment for analytics.
+═══════════════════════════════════════════════════════════════════════*/
+
+
+-- 🧠 TABLE 1 – silver.crm_cust_info
+-- ------------------------------------------------------------
+-- PURPOSE:
+-- Refine and deduplicate customer data from bronze.crm_cust_info.
+--
+-- PROCESS:
+-- • Removes duplicates using ROW_NUMBER() (keeps latest record).
+-- • Trims spaces from names and marital status fields.
+-- • Converts codes:
+--     S → Single
+--     M → Married
+--     Else → n/a
+-- • Standardizes gender:
+--     F → Female
+--     M → Male
+--     Unknown → n/a
+--
+-- RESULT:
+-- Cleaned, deduplicated, and standardized customer master data.
+
+
 insert into silver.crm_cust_info
 	(cst_id,
 	cst_key,
@@ -30,7 +60,29 @@ row_number() over(partition by cst_id order by cst_create_date desc) as flag_las
 from bronze.crm_cust_info
 where cst_id is not null
 )t where flag_last =1
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>table2>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+	
+-- 📦 TABLE 2 – silver.crm_prd_info
+-- ------------------------------------------------------------
+-- PURPOSE:
+-- Transform and standardize product information.
+--
+-- PROCESS:
+-- • Extracts product key using SUBSTRING and REPLACE.
+-- • Replaces null or missing cost values with 0.
+-- • Converts product line codes:
+--     M → Mountain
+--     R → Road
+--     S → Other Sales
+--     T → Touring
+--     Else → n/a
+-- • Calculates prd_end_dt using LEAD() for product period tracking.
+-- • Builds cat_id by reformatting the prd_key string.
+--
+-- RESULT:
+-- Clean, consistent product dimension table with readable values.
+
 
 
 use datawarehouse
@@ -64,7 +116,21 @@ order by prd_id
 
 
 select*from bronze.crm_prd_info
-	>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>table3<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+	
+-- 💰 TABLE 3 – silver.crm_sales_details
+-- ------------------------------------------------------------
+-- PURPOSE:
+-- Validate and correct sales transaction data.
+--
+-- PROCESS:
+-- • Cleans invalid or incorrectly formatted date fields.
+-- • Ensures sales = quantity × price; fixes mismatches.
+-- • Handles null or negative prices by recalculating logically.
+-- • Ensures integrity across all sales transaction fields.
+--
+-- RESULT:
+-- Verified and corrected sales fact table for accurate reporting.
 
 insert  into silver.crm_sales_details(
 sls_ord_num,
@@ -110,8 +176,22 @@ end as sls_price
 from bronze.crm_sales_details
 
 
+-- 👤 TABLE 4 – silver.erp_cust_az12
+-- ------------------------------------------------------------
+-- PURPOSE:
+-- Standardize and clean customer demographic data.
+--
+-- PROCESS:
+-- • Removes prefix ‘NAS’ from customer IDs.
+-- • Replaces future or invalid birthdates with NULL.
+-- • Normalizes gender entries:
+--     F / FEMALE → Female
+--     M / MALE → Male
+--     Else → n/a
+--
+-- RESULT:
+-- Clean and reliable demographic data for integration.
 
-	>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>table4<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 insert into silver.erp_cust_az12(cid,bdate,gen)
 select
@@ -127,7 +207,19 @@ else 'n/a'
 end as gen
 from bronze.erp_cust_az12
 
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>table5<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- 🌍 TABLE 5 – silver.erp_loc_a101
+-- ------------------------------------------------------------
+-- PURPOSE:
+-- Standardize and enhance customer location details.
+--
+-- PROCESS:
+-- • Removes hyphens from customer IDs.
+-- • Expands country codes:
+--     DE → Germany
+--     US / USA → United States
+--     NULL or empty → n/a
+-- • Ensures all country names follow consistent formatting.
+--
 insert into silver.erp_loc_a101(cid,cntry)
 select 
 replace (cid,'-','') cid,
@@ -138,7 +230,17 @@ case when trim(cntry)='DE' then 'Germany'
 	 end as cnrty
 from bronze.erp_loc_a101
 
-	>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>tabl6<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- 🗂 TABLE 6 – silver.erp_px_cat_glv2
+-- ------------------------------------------------------------
+-- PURPOSE:
+-- Load validated product category data from bronze to silver.
+--
+-- PROCESS:
+-- • Transfers clean records directly (id, cat, subcat, maintenance).
+-- • No transformation required (data already verified).
+--
+-- RESULT:
+-- Reliable category reference table for mapping and classification.
 
 
 use datawarehouse
